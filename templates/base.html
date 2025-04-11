@@ -1,0 +1,447 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAMAAAAoLQ9TAAAAYFBMVEUAAAD///////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////+LuvFxAAAALHRSTlMAAQMEBQYJCgsNDxEUEhYXGCEpKi0wNjs+QkNGS1JSVltcc3Z4gIeQq6yztLe8vr+/z9PX2uNKNxAAAAThJREFUGFcFwQcCwCAIBNATcPb+V7QhNUfBbFLbMI7UZZoacIQpjsCRDJzgoNUQgPMhUTeISDsO6IO0TNA0uP1mE9DwCNBGAErSxMvgAAAABJRU5ErkJggg==">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['$', '$'], ['\\(', '\\)']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Код и Плата</title>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #ECF0F1;
+      color: #2C3E50;
+    }
+    header, footer {
+      background-color: #2C3E50;
+      color: white;
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    header nav a {
+      margin: 0 1rem;
+      color: white;
+      text-decoration: none;
+    }
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+      padding: 2rem;
+    }
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 1rem;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+      position: relative;
+      cursor: pointer;
+    }
+    .card .answer {
+      max-height: 3.5em;
+      overflow: hidden;
+      position: relative;
+    }
+    .card .answer::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 1.5em;
+      background: linear-gradient(to top, white, transparent);
+    }
+    .search-modal, .article-modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: calc(60px + 2rem); /* например, 60px header + небольшой отступ */
+  z-index: 1000;
+}
+    .search-box, .article-box {
+      background: white;
+      padding: 2rem;
+      border-radius: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      width: 90%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .search-box input[type="text"] {
+      padding: 0.7rem;
+      font-size: 1rem;
+    }
+    .card.found {
+  border: 2px solid #2C3E50;
+  animation: highlightFound 0.5s ease-in-out;
+}
+
+@keyframes highlightFound {
+  from { transform: scale(1.02); opacity: 0; }
+  to   { transform: scale(1); opacity: 1; }
+}
+    .search-box button {
+      padding: 0.6rem;
+      background-color: #1ABC9C;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .upload-msg {
+      position: fixed;
+      bottom: 1rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #1ABC9C;
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 5px;
+      display: none;
+      z-index: 9999;
+    }
+    .loader {
+      display: none;
+      text-align: center;
+      margin-top: 1rem;
+    }
+    footer .socials i {
+      margin-left: 1rem;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div style="display: flex; align-items: center; gap: 0.5rem;">
+      <img src="/static/logo.png" alt="logo" style="height: 50px;">
+      <strong>Код и Плата</strong>
+    </div>
+    <nav>
+      <a href="#">Статьи</a>
+      <a href="#">Программирование</a>
+      <a href="#">Робототехника</a>
+      <a href="#">Алгоритмы</a>
+      <a href="#">DIY</a>
+    </nav>
+    <div>
+      <i class="fas fa-search" onclick="openSearch()"></i>
+      <i class="fas fa-user"></i>
+    </div>
+  </header>
+  
+  <div style="background-color: #e74c3c; color: white; padding: 0.75rem 2rem; text-align: center; font-size: 0.95rem;">
+    Сейчас сайт работает медленнее из-за высокой нагрузки, извините за предоставленные неудобства!
+  </div>
+
+  <section style="padding: 2rem; text-align: center;">
+    <h1 style="font-size: 2.5rem; font-weight: bold; margin-bottom: 2rem;">Статьи</h1>
+  
+  <div class="cards" id="cards">
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как работает цикл for в Python?</h3>
+      <small>12.03.2015</small>
+      <div class="answer">Цикл for в Python используется для перебора элементов в коллекциях или диапазоне значений...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое условный оператор if?</h3>
+      <small>03.07.2018</small>
+      <div class="answer">Условный оператор if позволяет выполнять код, только если условие истинно...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как подключить датчик влажности к Arduino?</h3>
+      <small>21.11.2020</small>
+      <div class="answer">Для подключения используйте питание 5V, GND и аналоговый вход A0, считав значение через analogRead...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Зачем использовать функции в коде?</h3>
+      <small>14.02.2019</small>
+      <div class="answer">Функции позволяют структурировать код, избегать повторов и упрощают сопровождение...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как работают списки в Python?</h3>
+      <small>09.09.2022</small>
+      <div class="answer">Списки — это упорядоченные изменяемые коллекции данных, доступ к элементам осуществляется по индексу...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое переменные и зачем они нужны?</h3>
+      <small>01.05.2016</small>
+      <div class="answer">Переменные используются для хранения данных, к которым можно обращаться и изменять в процессе выполнения...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как работает цикл while?</h3>
+      <small>27.01.2017</small>
+      <div class="answer">Цикл while выполняет блок кода, пока условие истинно. Он подходит для неизвестного числа повторений...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Какой микроконтроллер выбрать новичку?</h3>
+      <small>10.10.2021</small>
+      <div class="answer">Обычно для начала подойдёт Arduino Uno или ESP32 — они просты в использовании и поддерживаются сообществом...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое отладка кода?</h3>
+      <small>05.03.2013</small>
+      <div class="answer">Отладка — это процесс поиска и устранения ошибок в коде с помощью инструментов, логов или IDE...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как работает оператор break?</h3>
+      <small>17.04.2014</small>
+      <div class="answer">Оператор break прерывает выполнение цикла и передаёт управление следующей инструкции после него...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое словари в Python?</h3>
+      <small>28.06.2019</small>
+      <div class="answer">Словари — это коллекции пар ключ-значение, которые позволяют быстро находить данные по ключу...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как пользоваться GPIO на Raspberry Pi?</h3>
+      <small>19.02.2018</small>
+      <div class="answer">Библиотека RPi.GPIO позволяет управлять цифровыми входами и выходами прямо из Python...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как устроен алгоритм сортировки пузырьком?</h3>
+      <small>04.08.2020</small>
+      <div class="answer">Пузырьковая сортировка сравнивает пары соседних элементов и меняет их местами, пока массив не станет отсортированным...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое delay() в Arduino?</h3>
+      <small>11.12.2016</small>
+      <div class="answer">Функция delay(ms) приостанавливает выполнение кода на заданное количество миллисекунд...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое списки в языке C?</h3>
+      <small>03.05.2015</small>
+      <div class="answer">В языке C списки реализуются через массивы или структуры со связями между элементами...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как построить график функции в Python?</h3>
+      <small>29.09.2021</small>
+      <div class="answer">С помощью библиотеки matplotlib можно визуализировать данные и строить графики любых функций...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как работает датчик движения?</h3>
+      <small>08.07.2017</small>
+      <div class="answer">Датчики движения фиксируют изменения в инфракрасном излучении или ультразвуке и подают сигнал...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как читать данные с датчика температуры?</h3>
+      <small>15.01.2019</small>
+      <div class="answer">С помощью аналогового или цифрового входа Arduino можно считывать данные с термистора или DS18B20...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое переменные окружения?</h3>
+      <small>22.06.2016</small>
+      <div class="answer">Переменные окружения — это внешние параметры, которые передаются в программу из системы...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как происходит компиляция программы?</h3>
+      <small>09.10.2013</small>
+      <div class="answer">Компилятор преобразует исходный код в машинный язык, чтобы его можно было выполнять на процессоре...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как подключить светодиод к микроконтроллеру?</h3>
+      <small>01.04.2020</small>
+      <div class="answer">Светодиод подключается через резистор к цифровому выходу микроконтроллера и управляется с помощью digitalWrite...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как работает цикл do-while?</h3>
+      <small>13.03.2018</small>
+      <div class="answer">Цикл do-while выполняет тело цикла хотя бы один раз, а затем проверяет условие для повторения...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое JSON и зачем он нужен?</h3>
+      <small>06.11.2014</small>
+      <div class="answer">JSON — это текстовый формат обмена данными между сервером и клиентом, он удобен для хранения структур...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как работают нейросети?</h3>
+      <small>23.05.2021</small>
+      <div class="answer">Нейросети — это математические модели, вдохновлённые работой мозга, они обучаются находить закономерности...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как передавать данные по Wi-Fi с ESP32?</h3>
+      <small>12.01.2022</small>
+      <div class="answer">ESP32 может отправлять и принимать данные по Wi-Fi с помощью HTTP-запросов или WebSocket...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое переменная состояния?</h3>
+      <small>04.09.2012</small>
+      <div class="answer">Переменная состояния хранит информацию о текущем положении или статусе программы для последующих действий...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Зачем нужны комментарии в коде?</h3>
+      <small>18.08.2017</small>
+      <div class="answer">Комментарии помогают другим программистам понять логику кода и облегчают его поддержку...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Как организовать структуру проекта на Python?</h3>
+      <small>16.12.2015</small>
+      <div class="answer">Лучше всего разбивать проект на модули, использовать `__init__.py` и виртуальное окружение...</div>
+    </div>
+    <div class="card" onclick="openArticle(this)">
+      <h3>Что такое pull request на GitHub?</h3>
+      <small>02.02.2023</small>
+      <div class="answer">Pull request позволяет предложить изменения в коде, обсудить их и внести в основной репозиторий...</div>
+    </div>
+  </div>
+  <div style="display: flex; justify-content: center; margin-top: 2rem; gap: 0.5rem;">
+    <button style="padding: 0.5rem 1rem; border: none; background: #ecf0f1; border-radius: 5px; cursor: pointer;">1</button>
+    <button style="padding: 0.5rem 1rem; border: none; background: #ecf0f1; border-radius: 5px; cursor: pointer;">2</button>
+    <button style="padding: 0.5rem 1rem; border: none; background: #ecf0f1; border-radius: 5px; cursor: pointer;">3</button>
+    <button style="padding: 0.5rem 1rem; border: none; background: #ecf0f1; border-radius: 5px; cursor: pointer;">4</button>
+    <button style="padding: 0.5rem 1rem; border: none; background: #ecf0f1; border-radius: 5px; cursor: pointer;">5</button>
+    <button style="padding: 0.5rem 1rem; border: none; background: #ecf0f1; border-radius: 5px; cursor: pointer;">6</button>
+    <button style="padding: 0.5rem 1rem; border: none; background: #bdc3c7; border-radius: 5px; cursor: pointer;">&gt;</button>
+  </div>
+</section>
+
+  <div class="search-modal" id="searchModal">
+    <div class="search-box">
+      <input type="text" id="searchInput" placeholder="Найдите что угодно...">
+      <input type="file" id="imageUpload" accept="image/*" hidden>
+      <button onclick="handleSearch()">Поиск</button>
+      <div class="loader" id="loader">Уже ищем подходящий ответ из наших статей...</div>
+    </div>
+  </div>
+
+  <div class="article-modal" id="articleModal" onclick="closeArticle(event)">
+    <div class="article-box" id="articleContent"></div>
+  </div>
+
+  <div class="upload-msg" id="uploadMsg">Фото загружено</div>
+
+  <footer>
+    <div>© 2025 Код и Плата — Все права защищены</div>
+    <div class="socials">
+      <i class="fab fa-telegram"></i>
+      <i class="fab fa-vk"></i>
+      <i class="fab fa-github"></i>
+    </div>
+  </footer>
+
+  <script>
+    const searchModal = document.getElementById("searchModal");
+    const searchInput = document.getElementById("searchInput");
+    const imageUpload = document.getElementById("imageUpload");
+    const uploadMsg = document.getElementById("uploadMsg");
+    const articleModal = document.getElementById("articleModal");
+    const articleContent = document.getElementById("articleContent");
+    let uploadedImage = null;
+
+    function openSearch() {
+      searchModal.style.display = "flex";
+      searchInput.focus();
+    }
+
+    searchModal.addEventListener("click", (e) => {
+      if (e.target === searchModal) searchModal.style.display = "none";
+    });
+
+    function openArticle(el) {
+  const title = el.querySelector("h3").innerText;
+  const date = el.querySelector("small").innerText;
+  const rawMarkdown = el.querySelector(".answer").innerText;
+  const parsed = marked.parse(rawMarkdown);
+  articleContent.innerHTML = `<h2>${title}</h2><small>${date}</small><div>${parsed}</div>`;
+  articleModal.style.display = "flex";
+if (window.MathJax) {
+  MathJax.typesetPromise();
+}
+}
+
+    function closeArticle(e) {
+      if (e.target === articleModal) {
+        articleModal.style.display = "none";
+      }
+    }
+
+    searchInput.addEventListener('dragover', (e) => e.preventDefault());
+    searchInput.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        uploadedImage = file;
+        showUploadMessage();
+      }
+    });
+
+    function showUploadMessage() {
+      uploadMsg.style.display = 'block';
+      setTimeout(() => uploadMsg.style.display = 'none', 2000);
+    }
+
+    function randomDate() {
+      const start = new Date(2011, 1, 1);
+      const end = new Date(2024, 0, 1);
+      const date = new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
+      return date.toLocaleDateString('ru-RU');
+    }
+
+    async function handleSearch() {
+      const query = searchInput.value;
+      if (!query) return;
+      document.getElementById('loader').style.display = 'block';
+
+      const formData = new FormData();
+      formData.append('query', query);
+      if (uploadedImage) formData.append('image', uploadedImage);
+
+      const res = await fetch('/search', {
+        method: 'POST',
+        body: formData
+      });
+
+      const data = await res.json();
+document.getElementById('loader').style.display = 'none';
+
+// Снять отметку с предыдущей найденной статьи
+// Удалить предыдущую "Найденную" карточку (или можно просто убрать пометку и текст)
+const previousFound = document.querySelector('.card.found');
+if (previousFound) {
+  previousFound.classList.remove('found');
+  const note = previousFound.querySelector('.search-note');
+  if (note) note.remove();
+}
+
+// Создать новую карточку
+const card = document.createElement('div');
+card.className = 'card found';
+card.setAttribute("onclick", "openArticle(this)");
+card.innerHTML = `
+  <div class="search-note" style="font-weight: bold; color: #1ABC9C; margin-bottom: 0.5rem;">Нашли по вашему запросу:</div>
+  <h3>${data.title || query}</h3>
+  <small>${randomDate()}</small>
+  <div class="answer">${marked.parse(data.answer)}</div>
+`;
+
+document.getElementById('cards').prepend(card);
+
+// Обновить формулы и закрыть окно
+if (window.MathJax) MathJax.typesetPromise();
+searchInput.value = '';
+uploadedImage = null;
+searchModal.style.display = "none";
+    }
+  </script>
+</body>
+</html>
